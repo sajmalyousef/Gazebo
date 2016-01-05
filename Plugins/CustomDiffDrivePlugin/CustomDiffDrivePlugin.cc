@@ -27,10 +27,9 @@ enum {RIGHT, LEFT};
 /////////////////////////////////////////////////
 CustomDiffDrivePlugin::CustomDiffDrivePlugin()
 {
-  this->wheelSpeed[LEFT] = this->wheelSpeed[RIGHT] = 0;
-  this->wheelSeparation = .100;   //though given here, it will be recalculated from the model in Init()
-  this->wheelRadius = .016;       //though given here, it will be recalculated from the model in Init()
-  printf("Constructor executed successfully...\n");
+  this->wheelSeparation = .100;   //though given here, it will be calculated from the model in Init()
+  this->wheelRadius = .016;       //though given here, it will be calculated from the model in Init()
+
 }
 
 /////////////////////////////////////////////////
@@ -51,10 +50,15 @@ void CustomDiffDrivePlugin::Load(physics::ModelPtr _model,
   if (!_sdf->HasElement("right_joint"))
     gzerr << "DiffDrive plugin missing <right_joint> element\n";
 
+    if (!_sdf->HasElement("acrylic_base"))
+    gzerr << "DiffDrive plugin missing <acrylic_base> element\n";
+
   this->leftJoint = _model->GetJoint(
       _sdf->GetElement("left_joint")->Get<std::string>());
   this->rightJoint = _model->GetJoint(
       _sdf->GetElement("right_joint")->Get<std::string>());
+  this->acrylicBase = _model->GetLink(
+      _sdf->GetElement("acrylic_base")->Get<std::string>());
 
   if (!this->leftJoint)
     gzerr << "Unable to find left joint["
@@ -62,10 +66,13 @@ void CustomDiffDrivePlugin::Load(physics::ModelPtr _model,
   if (!this->rightJoint)
     gzerr << "Unable to find right joint["
           << _sdf->GetElement("right_joint")->Get<std::string>() << "]\n";
+  if (!this->acrylicBase)
+    gzerr << "Unable to find acrylicbase["
+          << _sdf->GetElement("acrylic_base")->Get<std::string>() << "]\n";
 
   this->updateConnection = event::Events::ConnectWorldUpdateBegin(
           boost::bind(&CustomDiffDrivePlugin::OnUpdate, this));
-  printf("Load() finished successfully...\n");
+
 }
 
 /////////////////////////////////////////////////
@@ -80,13 +87,16 @@ void CustomDiffDrivePlugin::Init()
   math::Box bb = parent->GetBoundingBox();
   // This assumes that the largest dimension of the wheel is the diameter
   this->wheelRadius = bb.GetSize().GetMax() * 0.5;
-  printf("Init() finished successfully...\n");
+
+
+  this->leftJoint->SetVelocityLimit(0, .1/this->wheelRadius);
+  this->rightJoint->SetVelocityLimit(0, .1/this->wheelRadius);
 }
 
 /////////////////////////////////////////////////
 void CustomDiffDrivePlugin::OnTargetPosMsg(ConstPosePtr &_msg)
 {
-  double xtarget, ytarget;// thetaTarget;  --> Not implimented
+  double xtarget = -1, ytarget = 10;// thetaTarget;  --> Not implimented
 
   xtarget = _msg->position().x();
   ytarget = _msg->position().y();
@@ -96,23 +106,27 @@ void CustomDiffDrivePlugin::OnTargetPosMsg(ConstPosePtr &_msg)
 /////////////////////////////////////////////////
 void CustomDiffDrivePlugin::OnUpdate()
 {
-  /* double d1, d2;
-  double dr, da;
 
-  this->prevUpdateTime = currTime;
+  double x = acrylicBase->GetWorldPose().pos.x;
+  double y = acrylicBase->GetWorldPose().pos.y;
+  double theta = acrylicBase->GetWorldPose().pos.y;
 
-  // Distance travelled by front wheels
-  d1 = stepTime.Double() * this->wheelRadius * this->leftJoint->GetVelocity(0);
-  d2 = stepTime.Double() * this->wheelRadius * this->rightJoint->GetVelocity(0);
+  if ((x - xtarget)*(x - xtarget) + (y - ytarget)*(y - ytarget) < .011)
+  {
+    this->leftJoint->SetVelocity(0, 0);
+    this->rightJoint->SetVelocity(0, 0);
+  }
+  else
+  {
+    float tmpTheta = theta;
+    if(theta > 3.14)
+      tmpTheta = 3.14 - theta;
+    int T = (atan2((xtarget - x),(ytarget - y)) - tmpTheta)*25/3.15;
+    int velocity = 255 - abs(T);
 
-  dr = (d1 + d2) / 2;
-  da = (d1 - d2) / this->wheelSeparation;
-  common::Time currTime = this->model->GetWorld()->GetSimTime();
-  common::Time stepTime = currTime - this->prevUpdateTime;
-  */
+    this->leftJoint->SetVelocity(0, (velocity + T)/this->wheelRadius);
+    this->rightJoint->SetVelocity(0, (velocity - T)/this->wheelRadius);
+  }
 
-  
-  
-  this->leftJoint->SetVelocity(0, leftVelDesired);
-  this->rightJoint->SetVelocity(0, rightVelDesired);
+
 }
