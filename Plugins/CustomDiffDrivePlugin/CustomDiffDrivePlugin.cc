@@ -18,6 +18,7 @@
 #include "gazebo/physics/physics.hh"
 #include "gazebo/transport/transport.hh"
 #include "CustomDiffDrivePlugin.hh"
+#include <iostream>
 
 using namespace gazebo;
 GZ_REGISTER_MODEL_PLUGIN(CustomDiffDrivePlugin)
@@ -27,8 +28,11 @@ enum {RIGHT, LEFT};
 /////////////////////////////////////////////////
 CustomDiffDrivePlugin::CustomDiffDrivePlugin()
 {
+
   this->wheelSeparation = .100;   //though given here, it will be calculated from the model in Init()
   this->wheelRadius = .016;       //though given here, it will be calculated from the model in Init()
+  double xtarget = -10, ytarget = 10;// thetaTarget;  --> Not implimented
+  std::cout<<"Exiting Constructor" << std::endl;
 
 }
 
@@ -96,10 +100,10 @@ void CustomDiffDrivePlugin::Init()
 /////////////////////////////////////////////////
 void CustomDiffDrivePlugin::OnTargetPosMsg(ConstPosePtr &_msg)
 {
-  double xtarget = -1, ytarget = 10;// thetaTarget;  --> Not implimented
+  
 
-  xtarget = _msg->position().x();
-  ytarget = _msg->position().y();
+  // xtarget = _msg->position().x();
+  // ytarget = _msg->position().y();
 
 }
 
@@ -113,8 +117,8 @@ void CustomDiffDrivePlugin::OnUpdate()
 
   if ((x - xtarget)*(x - xtarget) + (y - ytarget)*(y - ytarget) < .011)
   {
-    this->leftJoint->SetVelocity(0, 0);
-    this->rightJoint->SetVelocity(0, 0);
+    // this->leftJoint->SetVelocity(0, 0);
+    // this->rightJoint->SetVelocity(0, 0);
   }
   else
   {
