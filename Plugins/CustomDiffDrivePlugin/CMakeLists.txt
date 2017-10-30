@@ -9,3 +9,4 @@ list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 add_library(CustomDiffDrivePlugin SHARED CustomDiffDrivePlugin.cc)
 target_link_libraries(CustomDiffDrivePlugin ${GAZEBO_LIBRARIES})
+this is awesome
