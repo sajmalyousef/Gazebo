@@ -4,6 +4,7 @@
 
      <include>
       <uri>model://ground_plane</uri>
+      <uri>/uri>
     </include>
 
     <include>
